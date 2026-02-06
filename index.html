@@ -774,6 +774,240 @@ function renderNatPlaying(s, nId) {
   const myDec = s.decisions?.[nId];
   const telegrams = (s.telegrams || []).filter(tg => tg.from === nId || tg.to === nId || !tg.secret);
 
+  // Calcul pressions
+  const indGap = Math.abs(st.ind - n.pInd);
+  const debtL = indGap > 30 ? 'CRITIQUE' : indGap > 15 ? 'Élevé' : 'Normal';
+  const debtC = indGap > 30 ? 'var(--red)' : indGap > 15 ? 'var(--orange)' : 'var(--green)';
+  const revL = st.pop < 20 ? 'IMMINENT' : st.pop < 35 ? 'Élevé' : st.pop < 50 ? 'Modéré' : 'Faible';
+  const revC = st.pop < 20 ? 'var(--red)' : st.pop < 35 ? 'var(--orange)' : 'var(--green)';
+
+  // Télégrammes
+  let tgHtml = '';
+  if (telegrams.length) {
+    tgHtml = `<div class="panel"><div class="panel-header">📨 Télégrammes diplomatiques</div><div style="max-height:150px;overflow-y:auto">
+      ${telegrams.map(tg => `<div class="telegram-msg" style="${tg.to === nId ? 'border-left:3px solid var(--gold)' : ''}">
+        <strong>${NATIONS[tg.from]?.flag} → ${NATIONS[tg.to]?.flag}</strong>
+        <span style="float:right;color:#8a7a60">${tg.secret ? '🔒 Secret' : '📢 Officiel'}</span><br>
+        « ${tg.message} »
+      </div>`).join('')}
+    </div></div>`;
+  }
+
+  // Décisions
+  let decHtml = '';
+  if (!myDec) {
+    decHtml = `<div class="panel" style="border-color:var(--gold)44">
+      <div class="panel-header">⚖️ C'est à vous de décider !</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Choisissez l'action que ${n.name} va entreprendre ce tour. Chaque choix a des conséquences sur vos jauges et sur la tension européenne.</p>
+      <div class="dec-grid" style="display:grid;grid-template-columns:1fr;gap:10px">
+      ${DECISIONS[s.turn].map(d => `<div class="dec-card" onclick="submitDecision('${nId}','${d.id}')">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)">${d.text}</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">${d.desc}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          ${d.fx.mil ? `<span class="tag" style="color:${d.fx.mil > 0 ? 'var(--red)' : 'var(--blue)'}">⚔ ${d.fx.mil > 0 ? '+' : ''}${d.fx.mil}</span>` : ''}
+          ${d.fx.ind ? `<span class="tag" style="color:${d.fx.ind > 0 ? 'var(--gold)' : 'var(--orange)'}">💰 ${d.fx.ind > 0 ? '+' : ''}${d.fx.ind}</span>` : ''}
+          ${d.fx.pop ? `<span class="tag" style="color:${d.fx.pop > 0 ? 'var(--green)' : 'var(--orange)'}">✊ ${d.fx.pop > 0 ? '+' : ''}${d.fx.pop}</span>` : ''}
+          ${d.fx.dip ? `<span class="tag" style="color:${d.fx.dip > 0 ? 'var(--blue)' : 'var(--orange)'}">🕊 ${d.fx.dip > 0 ? '+' : ''}${d.fx.dip}</span>` : ''}
+          <span class="tag" style="color:${d.tension > 0 ? '#ff6080' : '#60d0a0'};background:${d.tension > 0 ? '#2a1520' : '#152a20'}">Tension ${d.tension > 0 ? '+' : ''}${d.tension}</span>
+        </div>
+      </div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    decHtml = `<div class="panel" style="text-align:center;border-color:var(--green)">
+      <div style="font-size:18px;color:var(--green);margin-bottom:8px">✓ Décision enregistrée !</div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:4px">${myDec.text}</div>
+      <div style="font-size:12px;color:var(--text-dim)">${myDec.desc}</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:12px">En attente que les autres nations décident...</div>
+    </div>`;
+  }
+
+  app.innerHTML = `<div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:32px">${n.flag}</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:${n.accent}">${n.name}</div>
+          <div style="font-size:11px;color:var(--text-dim)">Tour ${t.id} • ${t.year}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openTg('${nId}')">⚡ Télégramme</button>
+    </div>
+    
+    ${hTension(s.tension)}
+    
+    <div class="panel">
+      <div class="panel-header">État de ${n.short}</div>
+      ${hGauge(st.mil, 'var(--red)', '⚔ Militaire', GLOSSARY.militaire)}
+      ${hGauge(st.ind, 'var(--gold)', '💰 Industrie', GLOSSARY.industrie)}
+      ${hGauge(st.pop, 'var(--green)', '✊ Stabilité', GLOSSARY.stabilite)}
+      ${hGauge(st.dip, 'var(--blue)', '🕊 Diplomatie', GLOSSARY.diplomatie)}
+    </div>
+    
+    ${allies.length ? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;padding:8px 12px;background:var(--bg-card);border-radius:4px">
+      <strong>Vos alliés :</strong> ${allies.map(a => `<span class="ally-tag">${NATIONS[a]?.flag} ${NATIONS[a]?.short}</span>`).join(' ')}
+    </div>` : ''}
+    
+    <div class="panel">
+      <div class="panel-header">Pressions intérieures <span class="info-icon" title="Ces pressions représentent les forces qui influencent votre gouvernement. Les ignorer peut avoir des conséquences !">?</span></div>
+      <div class="pr-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="text-align:center;padding:10px;background:var(--bg-deep);border-radius:4px">
+          <div style="font-size:10px;color:var(--gold);margin-bottom:4px">💰 Industriels</div>
+          <div style="font-size:11px;color:var(--text-dim)">Demandent : ${n.pInd}</div>
+          <div style="font-size:12px;font-weight:700;color:${debtC}">${debtL}</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--bg-deep);border-radius:4px">
+          <div style="font-size:10px;color:var(--red);margin-bottom:4px">⚔ Généraux</div>
+          <div style="font-size:11px;color:var(--text-dim)">Veulent : ${n.pMil}</div>
+          <div style="font-size:12px;color:${st.mil < n.pMil - 20 ? 'var(--red)' : 'var(--green)'}">${st.mil < n.pMil - 20 ? 'Mécontents !' : 'Satisfaits'}</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--bg-deep);border-radius:4px">
+          <div style="font-size:10px;color:var(--green);margin-bottom:4px">✊ Peuple</div>
+          <div style="font-size:11px;color:var(--text-dim)">Stabilité : ${Math.round(st.pop)}</div>
+          <div style="font-size:12px;font-weight:700;color:${revC}">Révolution : ${revL}</div>
+        </div>
+      </div>
+      ${st.pop < 30 ? `<div style="margin-top:10px;padding:8px;background:#2a151a;border:1px solid var(--red)44;border-radius:4px;font-size:11px;color:var(--red)">
+        ⚠️ Attention ! Si votre stabilité tombe à 15 ou moins, une révolution renversera votre gouvernement !
+      </div>` : ''}
+    </div>
+    
+    ${tgHtml}
+    ${decHtml}
+    
+    <button class="btn btn-ghost btn-sm" onclick="showFullBriefing('${nId}')" style="width:100%;margin-top:8px">📖 Revoir le briefing de ${n.short}</button>
+
+    <div id="tgModal" class="overlay" style="display:none" onclick="this.style.display='none'">
+      <div class="telegram-paper" onclick="event.stopPropagation()">
+        <div style="text-align:center;border-bottom:2px solid #8a7a60;padding-bottom:10px;margin-bottom:14px">
+          <div style="font-size:10px;letter-spacing:4px;color:#8a7a60;text-transform:uppercase">⚡ Télégramme diplomatique ⚡</div>
+          <div id="tgTitle" style="font-size:16px;font-weight:700;margin-top:4px">TÉLÉGRAMME OFFICIEL</div>
+        </div>
+        <div style="font-size:11px;color:#6a5a40;margin-bottom:8px">DE : ${n.flag} ${n.short}</div>
+        <div style="font-size:11px;color:#6a5a40;margin-bottom:4px">À :</div>
+        <select id="tgTo" style="width:100%;padding:8px;background:#ede8d8;border:1px solid #8a7a60;font-family:'Special Elite',monospace;font-size:13px;margin-bottom:8px">
+          <option value="">— Choisir le destinataire —</option>
+          ${(s.activeNations || []).filter(k => k !== nId && !(s.eliminated || []).includes(k)).map(k =>
+            `<option value="${k}">${NATIONS[k].flag} ${NATIONS[k].short}</option>`).join('')}
+        </select>
+        <textarea id="tgMsg" placeholder="Écrivez votre message diplomatique..." maxlength="200" style="width:100%;height:80px;padding:10px;background:#ede8d8;border:1px solid #8a7a60;font-family:'Special Elite',monospace;font-size:12px;resize:none;box-sizing:border-box"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;cursor:pointer">
+          <input type="checkbox" id="tgSec" onchange="document.getElementById('tgTitle').textContent=this.checked?'TÉLÉGRAMME SECRET':'TÉLÉGRAMME OFFICIEL'"> 
+          🔒 Secret (seul le destinataire le verra)
+        </label>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button onclick="document.getElementById('tgModal').style.display='none'" style="flex:1;padding:10px;background:none;border:1px solid #8a7a60;font-family:'Special Elite',monospace;cursor:pointer;color:#6a5a40">Annuler</button>
+          <button onclick="sendTg('${nId}')" style="flex:1;padding:10px;background:#2a2010;color:#f5f0e1;border:none;font-family:'Special Elite',monospace;font-weight:700;cursor:pointer">⚡ Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.openTg = function(nId) {
+  document.getElementById('tgModal').style.display = 'flex';
+};
+
+window.sendTg = function(from) {
+  const to = document.getElementById('tgTo').value;
+  const msg = document.getElementById('tgMsg').value.trim();
+  const secret = document.getElementById('tgSec').checked;
+  if (!to || !msg) { alert('Choisissez un destinataire et écrivez un message !'); return; }
+
+  const tgs = [...(gameState.telegrams || []), { from, to, message: msg, secret, ts: Date.now() }];
+  setInRoom('telegrams', tgs);
+  document.getElementById('tgModal').style.display = 'none';
+  document.getElementById('tgMsg').value = '';
+};
+
+window.submitDecision = function(nId, dId) {
+  if (gameState.decisions?.[nId]) return; // Déjà voté
+  const dec = DECISIONS[gameState.turn]?.find(d => d.id === dId);
+  if (!dec) return;
+  setInRoom(`decisions/${nId}`, dec);
+};
+
+function renderNatResolution(s, nId) {
+  const n = NATIONS[nId];
+  const st = s.nationStates[nId];
+  const last = (s.history || [])[(s.history || []).length - 1];
+  const myDec = last?.decisions?.[nId];
+  
+  app.innerHTML = `<div class="container">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-size:32px">${n.flag}</span>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:${n.accent}">${n.name}</div>
+        <div style="font-size:11px;color:var(--text-dim)">Résolution du Tour ${s.turn}</div>
+      </div>
+    </div>
+    
+    ${hTension(s.tension)}
+    
+    ${myDec ? `<div class="panel">
+      <div class="panel-header">Votre décision</div>
+      <div style="font-size:14px;color:var(--text)">${myDec.text}</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${myDec.desc}</div>
+    </div>` : ''}
+    
+    <div class="panel">
+      <div class="panel-header">Nouvel état de ${n.short}</div>
+      ${hGauge(st.mil, 'var(--red)', '⚔ Militaire', GLOSSARY.militaire)}
+      ${hGauge(st.ind, 'var(--gold)', '💰 Industrie', GLOSSARY.industrie)}
+      ${hGauge(st.pop, 'var(--green)', '✊ Stabilité', GLOSSARY.stabilite)}
+      ${hGauge(st.dip, 'var(--blue)', '🕊 Diplomatie', GLOSSARY.diplomatie)}
+    </div>
+    
+    ${last?.events?.length ? `<div class="panel" style="border-color:var(--red)33">
+      <div class="panel-header" style="color:var(--red)">⚡ Ce qui s'est passé</div>
+      ${last.events.map(e => `<div style="font-size:13px;color:var(--text);margin-bottom:6px">${e}</div>`).join('')}
+    </div>` : ''}
+    
+    <div style="text-align:center;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px">
+      <div style="font-size:13px;color:var(--text-dim)">⏳ En attente du prochain tour...</div>
+    </div>
+  </div>`;
+}
+
+function renderNatEndgame(s, nId) {
+  const n = NATIONS[nId];
+  const st = s.nationStates[nId];
+  const war = s.tension >= 70;
+  const elim = (s.eliminated || []).includes(nId);
+  const score = elim ? 0 : Math.round(20 + (!war ? 30 : 0) + st.mil * .2 + st.ind * .3 + st.pop * .25 + st.dip * .25);
+  
+  app.innerHTML = `<div class="container" style="text-align:center;padding-top:30px">
+    <span style="font-size:64px">${n.flag}</span>
+    <h2 style="font-size:28px;color:${war ? 'var(--red)' : 'var(--green)'};margin:16px 0">
+      ${war ? 'LA GUERRE ÉCLATE' : 'LA PAIX EST PRÉSERVÉE'}
+    </h2>
+    
+    ${elim ? `<div style="color:var(--red);font-size:14px;margin-bottom:16px">Votre gouvernement a été renversé par une révolution</div>` : ''}
+    
+    <div style="font-size:56px;font-weight:700;color:var(--gold);margin:24px 0">${score}</div>
+    <div style="font-size:14px;color:var(--text-dim)">points</div>
+    
+    <div style="margin-top:24px;padding:16px;background:var(--bg-card);border-radius:6px;text-align:left;max-width:400px;margin-left:auto;margin-right:auto">
+      <div style="font-size:12px;color:var(--text-faint);margin-bottom:8px">Calcul du score :</div>
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">
+        • Survie : ${elim ? '0' : '20'} pts<br>
+        • Paix préservée : ${war ? '0' : '30'} pts<br>
+        • Jauges finales : ${elim ? '0' : Math.round(st.mil * .2 + st.ind * .3 + st.pop * .25 + st.dip * .25)} pts
+      </div>
+    </div>
+    
+    <div style="color:var(--text-faint);font-size:12px;margin-top:24px">
+      Regardez l'écran projeté pour le classement final et la discussion !
+    </div>
+  </div>`;
+}
+
+// Init
+render();
+</script>
+</body>
+</html> || []).filter(tg => tg.from === nId || tg.to === nId || !tg.secret);
+
   const indGap = Math.abs(st.ind - n.pInd);
   const debtL = indGap > 30 ? 'CRITIQUE' : indGap > 15 ? 'Élevé' : 'Normal';
   const debtC = indGap > 30 ? 'var(--red)' : indGap > 15 ? 'var(--orange)' : 'var(--green)';
