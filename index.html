@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>POUDRIÈRE — Simulation diplomatique 1890–1914</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep:#080604;--bg-main:#110e0a;--bg-card:#1a1510;--bg-elevated:#221c14;
+  --border:#3a3530;--border-light:#4a4540;
+  --gold:#c4a35a;--gold-dim:#8a6a2a;
+  --text:#c0b8a8;--text-dim:#8a8070;--text-faint:#6a5a40;
+  --red:#e63946;--red-dark:#8a1a2a;--green:#81b29a;--blue:#6a9fd8;--orange:#e07a5f;--cream:#f5f0e1;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg-deep);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;min-height:100dvh}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+h1,h2,h3{font-family:'Playfair Display',serif;font-weight:400}
+.container{max-width:1000px;margin:0 auto;padding:16px}
+.btn{padding:10px 28px;font-family:'Crimson Pro',serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:3px;cursor:pointer;transition:all .3s;-webkit-tap-highlight-color:transparent}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:var(--bg-deep)}
+.btn-gold:hover{filter:brightness(1.15)}
+.btn-red{background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text-dim)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:default;filter:none}
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:20px;margin-bottom:16px}
+.panel-header{font-size:11px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase;margin-bottom:14px}
+.gauge{margin-bottom:8px}
+.gauge-label{font-size:11px;color:var(--text-dim);margin-bottom:3px}
+.gauge-track{height:10px;background:#2a2520;border-radius:2px;overflow:hidden;border:1px solid var(--border)}
+.gauge-fill{height:100%;border-radius:2px;transition:width .8s}
+.gauge-sm .gauge-track{height:6px}
+.gauge-sm .gauge-label{font-size:10px;margin-bottom:2px}
+.tension-box{text-align:center;padding:10px 0;margin-bottom:12px}
+.tension-lbl{font-size:11px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px}
+.tension-track{position:relative;height:30px;background:var(--bg-deep);border-radius:3px;overflow:hidden;border:1px solid var(--border);max-width:600px;margin:0 auto}
+.tension-fill{height:100%;transition:width 1.2s,background 1s}
+.tension-txt{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9);letter-spacing:1px}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center}
+.telegram-paper{background:var(--cream);border:3px double #8a7a60;padding:24px;font-family:'Special Elite','Courier New',monospace;color:#2a2010;max-width:440px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.telegram-msg{background:#ede8d8;border:1px solid #8a7a60;padding:8px 12px;margin-bottom:6px;border-radius:2px;font-family:'Special Elite',monospace;font-size:11px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#2a2520;border:1px solid var(--border-light);border-radius:3px;padding:3px 10px;font-size:12px;color:var(--text)}
+.nation-btn{border:2px solid #2a2520;border-radius:4px;padding:14px;cursor:pointer;transition:all .3s;background:var(--bg-deep);text-align:left;-webkit-tap-highlight-color:transparent}
+.nation-btn.sel{border-color:var(--gold);background:var(--bg-elevated)}
+.nation-btn.taken{opacity:.4;pointer-events:none}
+.dec-card{background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:14px;cursor:pointer;transition:all .25s;text-align:left;-webkit-tap-highlight-color:transparent}
+.dec-card:hover,.dec-card:active{border-color:var(--gold);background:var(--bg-card)}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:2px;background:#2a2520;margin-right:4px;margin-top:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.dot-on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot-off{background:#4a3530}
+.code-display{font-family:'Special Elite',monospace;font-size:28px;letter-spacing:4px;color:var(--gold);background:var(--bg-deep);padding:12px 24px;border:2px solid var(--gold);border-radius:4px;text-align:center;margin:16px auto;display:inline-block}
+input[type="text"]{background:var(--bg-deep);border:1px solid var(--border);color:var(--text);padding:10px 14px;font-family:'Special Elite',monospace;font-size:16px;border-radius:3px;text-align:center;text-transform:uppercase;letter-spacing:2px}
+input[type="text"]:focus{outline:none;border-color:var(--gold)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 20px rgba(230,57,70,.3)}50%{box-shadow:0 0 40px rgba(230,57,70,.6)}}
+.anim{animation:fadeIn .5s ease forwards}
+.pulse{animation:pulse 2s infinite}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:600px){.container{padding:10px}.panel{padding:14px}h1{font-size:28px!important}.dec-grid{grid-template-columns:1fr!important}.nat-grid{grid-template-columns:repeat(2,1fr)!important}.pr-grid{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURATION FIREBASE
+// ═══════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyAxTyBmMn9Y7MyG3NpMoRvMrn7TE45V8lQ",
+  authDomain: "forges-du-progres.firebaseapp.com",
+  databaseURL: "https://forges-du-progres-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "forges-du-progres",
+  storageBucket: "forges-du-progres.firebasestorage.app",
+  messagingSenderId: "429109623434",
+  appId: "1:429109623434:web:d6a36cb0a5b4a434f08b73"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ═══════════════════════════════════════════════════════════════
+//  GAME DATA
+// ═══════════════════════════════════════════════════════════════
+const NATIONS = {
+  germany:{name:"Empire allemand",short:"Allemagne",flag:"🇩🇪",color:"#1a1a2e",accent:"#c4a35a",
+    leader:"Guillaume II",desc:"Puissance industrielle montante cherchant sa « place au soleil ».",
+    startAllies:["austria","italy"],mil:70,ind:80,pop:55,dip:50,pInd:70,pMil:65},
+  france:{name:"République française",short:"France",flag:"🇫🇷",color:"#0d1b4a",accent:"#e63946",
+    leader:"Poincaré",desc:"La Revanche hante les esprits. L'Alsace-Lorraine reste une plaie ouverte.",
+    startAllies:["russia"],mil:60,ind:60,pop:50,dip:65,pInd:55,pMil:50},
+  britain:{name:"Royaume-Uni",short:"Royaume-Uni",flag:"🇬🇧",color:"#14213d",accent:"#e07a5f",
+    leader:"George V",desc:"Maître des mers, pratiquant le « splendide isolement ».",
+    startAllies:[],mil:55,ind:75,pop:45,dip:80,pInd:75,pMil:45},
+  austria:{name:"Autriche-Hongrie",short:"Autriche-Hongrie",flag:"🇦🇹",color:"#2d1b00",accent:"#f4a261",
+    leader:"François-Joseph",desc:"Empire multinational fragile, menacé par les nationalismes.",
+    startAllies:["germany"],mil:50,ind:45,pop:40,dip:45,pInd:40,pMil:55},
+  russia:{name:"Empire russe",short:"Russie",flag:"🇷🇺",color:"#1b2a1b",accent:"#81b29a",
+    leader:"Nicolas II",desc:"Le colosse aux pieds d'argile, protecteur des Slaves.",
+    startAllies:["france"],mil:65,ind:35,pop:60,dip:40,pInd:30,pMil:60},
+  ottoman:{name:"Empire ottoman",short:"Emp. ottoman",flag:"🏳️",color:"#3d0c02",accent:"#d4a574",
+    leader:"Jeunes-Turcs",desc:"« L'homme malade de l'Europe » se modernise.",
+    startAllies:[],mil:35,ind:25,pop:35,dip:30,pInd:25,pMil:50},
+  italy:{name:"Royaume d'Italie",short:"Italie",flag:"🇮🇹",color:"#0b3d0b",accent:"#90be6d",
+    leader:"Victor-Emmanuel III",desc:"Membre de la Triplice mais lorgnant sur l'Autriche.",
+    startAllies:["germany","austria"],mil:40,ind:40,pop:40,dip:55,pInd:45,pMil:35}
+};
+
+const TURNS = [
+  {id:1,year:"1890–1898",title:"La fin de Bismarck",desc:"Bismarck renvoyé. Guillaume II lance la Weltpolitik.",
+    event:"L'Allemagne refuse le Traité de réassurance avec la Russie. La France propose une alliance à Saint-Pétersbourg.",
+    shifts:{germany:{ind:10,mil:5},france:{pop:10},russia:{pop:5}},baseTension:15},
+  {id:2,year:"1898–1905",title:"Course aux armements navals",desc:"Tirpitz lance la flotte. Crise de Tanger.",
+    event:"Guillaume II débarque à Tanger et conteste la France au Maroc. Le Royaume-Uni s'alarme.",
+    shifts:{germany:{mil:15,ind:10},britain:{mil:10,pop:10},france:{mil:5}},baseTension:30},
+  {id:3,year:"1905–1909",title:"Crise bosniaque",desc:"L'Autriche annexe la Bosnie. La Russie humiliée.",
+    event:"L'annexion de la Bosnie provoque une crise majeure. Les Balkans deviennent la « poudrière ».",
+    shifts:{austria:{pop:15,mil:10},russia:{mil:15,pop:10},ottoman:{pop:15}},baseTension:50},
+  {id:4,year:"1911–1913",title:"Agadir et Balkans",desc:"La canonnière Panther. Les guerres balkaniques.",
+    event:"La Serbie double son territoire. L'Autriche veut en finir. Les alliances se figent.",
+    shifts:{germany:{mil:10},france:{mil:10},austria:{mil:15,pop:10},russia:{mil:5}},baseTension:65},
+  {id:5,year:"Été 1914",title:"Sarajevo",desc:"François-Ferdinand assassiné. L'engrenage s'active.",
+    event:"Ultimatum à la Serbie. La Russie mobilise. L'Allemagne signe un « chèque en blanc ».",
+    shifts:{austria:{mil:20,pop:15},russia:{mil:20},germany:{mil:15},france:{mil:10}},baseTension:85}
+];
+
+const DECISIONS = {
+  1:[
+    {id:"d1a",text:"Augmenter le budget militaire (+15%)",fx:{mil:15,ind:-5,pop:-5},tension:5,tag:"militariste"},
+    {id:"d1b",text:"Chercher de nouvelles alliances",fx:{dip:15,pop:5},tension:-3,tag:"diplomate"},
+    {id:"d1c",text:"Développer l'industrie et les colonies",fx:{ind:15,pop:5},tension:3,tag:"expansionniste"},
+    {id:"d1d",text:"Proposer un congrès de paix",fx:{dip:10,pop:10,mil:-5},tension:-8,tag:"pacifiste"}
+  ],
+  2:[
+    {id:"d2a",text:"Construire des cuirassés",fx:{mil:20,ind:5,pop:-5},tension:8,tag:"militariste"},
+    {id:"d2b",text:"Soutenir un allié dans la crise",fx:{dip:10,mil:5,pop:5},tension:10,tag:"provocateur"},
+    {id:"d2c",text:"Négocier des compensations",fx:{ind:10,dip:10},tension:-2,tag:"diplomate"},
+    {id:"d2d",text:"Rester neutre",fx:{mil:10,pop:10},tension:-5,tag:"isolationniste"}
+  ],
+  3:[
+    {id:"d3a",text:"Soutien militaire balkanique",fx:{mil:10,dip:5},tension:12,tag:"provocateur"},
+    {id:"d3b",text:"Exiger des concessions",fx:{pop:10,mil:5},tension:8,tag:"expansionniste"},
+    {id:"d3c",text:"Conférence de paix",fx:{dip:15,pop:5,mil:-10},tension:-10,tag:"pacifiste"},
+    {id:"d3d",text:"Espionner les rivaux",fx:{dip:5,mil:5},tension:5,tag:"espion"}
+  ],
+  4:[
+    {id:"d4a",text:"Mobilisation partielle",fx:{mil:20,pop:-10,ind:-10},tension:15,tag:"militariste"},
+    {id:"d4b",text:"Envoyer un ultimatum",fx:{mil:5,dip:-15,pop:10},tension:18,tag:"provocateur"},
+    {id:"d4c",text:"Traité de non-agression",fx:{dip:20,pop:10,mil:-5},tension:-12,tag:"pacifiste"},
+    {id:"d4d",text:"Renforcer les alliances",fx:{dip:10,mil:10},tension:5,tag:"stratège"}
+  ],
+  5:[
+    {id:"d5a",text:"MOBILISATION GÉNÉRALE — GUERRE",fx:{mil:25,dip:-20,pop:-5},tension:25,tag:"guerre"},
+    {id:"d5b",text:"Soutenir l'allié, médiation",fx:{dip:10,mil:10,pop:5},tension:8,tag:"médiation"},
+    {id:"d5c",text:"Neutralité totale",fx:{dip:-10,pop:15,mil:-10},tension:-15,tag:"neutralité"},
+    {id:"d5d",text:"Trahir son alliance",fx:{dip:-20,pop:-15,mil:5},tension:10,tag:"trahison"}
+  ]
+};
+
+const clamp=(v,lo=0,hi=100)=>Math.max(lo,Math.min(hi,v));
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let currentRoom = null;
+let currentRole = null; // 'master' | nationId
+let gameState = null;
+let unsubscribe = null;
+
+const app = document.getElementById('app');
+
+// ═══════════════════════════════════════════════════════════════
+//  FIREBASE HELPERS
+// ═══════════════════════════════════════════════════════════════
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'WWI-';
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function subscribeToRoom(code) {
+  if (unsubscribe) unsubscribe();
+  const ref = db.ref('poudriere/' + code);
+  unsubscribe = ref.on('value', (snap) => {
+    gameState = snap.val();
+    render();
+  });
+}
+
+function updateRoom(updates) {
+  if (!currentRoom) return;
+  db.ref('poudriere/' + currentRoom).update(updates);
+}
+
+function setInRoom(path, value) {
+  if (!currentRoom) return;
+  db.ref('poudriere/' + currentRoom + '/' + path).set(value);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════════════════════════
+function tColor(v){return v<30?'#81b29a':v<50?'#f2cc8f':v<70?'#e07a5f':v<85?'#e63946':'#ff0040'}
+function tLabel(v){return v<20?'Paix relative':v<40?'Tensions':v<60?'Crise grave':v<75?'Au bord du gouffre':v<90?'POUDRIÈRE':'🔥 GUERRE 🔥'}
+function hTension(t){
+  const c=tColor(t);
+  return `<div class="tension-box"><div class="tension-lbl">Tension européenne</div>
+    <div class="tension-track"><div class="tension-fill" style="width:${clamp(t)}%;background:linear-gradient(90deg,#81b29a,${c});${t>70?`box-shadow:0 0 20px ${c}55`:''}"></div>
+    <div class="tension-txt">${Math.round(t)}% — ${tLabel(t)}</div></div></div>`;
+}
+function hGauge(val,color,label,sm){
+  return `<div class="gauge${sm?' gauge-sm':''}">
+    ${label?`<div class="gauge-label">${label}</div>`:''}
+    <div class="gauge-track"><div class="gauge-fill" style="width:${clamp(val)}%;background:${color}"></div></div></div>`;
+}
+function hAlliances(alli){
+  const pairs=[],seen=new Set();
+  Object.entries(alli||{}).forEach(([k,v])=>{(v||[]).forEach(a=>{const key=[k,a].sort().join('-');if(!seen.has(key)){seen.add(key);pairs.push([k,a])}})});
+  if(!pairs.length) return '';
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">${pairs.map(([a,b])=>`<div class="chip">${NATIONS[a]?.flag} <span style="color:var(--text-faint)">⚔</span> ${NATIONS[b]?.flag}</div>`).join('')}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN RENDER
+// ═══════════════════════════════════════════════════════════════
+function render() {
+  if (!currentRoom) return renderLobby();
+  if (!gameState) {
+    app.innerHTML = `<div class="container" style="text-align:center;padding:60px"><p style="color:var(--text-dim)">Connexion...</p></div>`;
+    return;
+  }
+  if (currentRole === 'master') renderMaster();
+  else renderNation();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOBBY
+// ═══════════════════════════════════════════════════════════════
+function renderLobby() {
+  app.innerHTML = `<div class="container" style="max-width:600px">
+    <div style="text-align:center;padding:40px 0 30px">
+      <div style="font-size:11px;letter-spacing:6px;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px">Simulation diplomatique</div>
+      <h1 style="font-size:48px;color:var(--gold);letter-spacing:2px;text-shadow:0 0 40px rgba(196,163,90,.3)">POUDRIÈRE</h1>
+      <div style="font-size:15px;color:var(--text-dim);font-style:italic;margin-top:6px">L'Europe au bord de l'abîme, 1890–1914</div>
+      <div style="width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:20px auto"></div>
+    </div>
+
+    <div class="panel" style="text-align:center">
+      <div class="panel-header">👁 Maître du jeu (professeur)</div>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Crée une nouvelle partie et projette l'écran</p>
+      <button class="btn btn-gold" onclick="createRoom()">Créer une partie</button>
+    </div>
+
+    <div class="panel" style="text-align:center">
+      <div class="panel-header">🎮 Rejoindre une partie (élève)</div>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Entre le code affiché sur l'écran du professeur</p>
+      <input type="text" id="joinCode" placeholder="WWI-XXXX" maxlength="8" style="width:160px;margin-bottom:12px">
+      <br>
+      <button class="btn btn-ghost" onclick="joinRoom()">Rejoindre</button>
+    </div>
+  </div>`;
+}
+
+window.createRoom = async function() {
+  const code = generateRoomCode();
+  const initial = {
+    code: code,
+    phase: 'lobby',
+    selectedNations: Object.keys(NATIONS),
+    players: {},
+    nationStates: {},
+    alliances: {},
+    decisions: {},
+    tension: 10,
+    turn: 0,
+    eliminated: [],
+    telegrams: [],
+    history: [],
+    createdAt: Date.now()
+  };
+  await db.ref('poudriere/' + code).set(initial);
+  currentRoom = code;
+  currentRole = 'master';
+  subscribeToRoom(code);
+};
+
+window.joinRoom = async function() {
+  const code = document.getElementById('joinCode').value.toUpperCase().trim();
+  if (!code) return;
+  const snap = await db.ref('poudriere/' + code).once('value');
+  if (!snap.exists()) {
+    alert('Partie introuvable. Vérifie le code.');
+    return;
+  }
+  currentRoom = code;
+  currentRole = null; // will pick nation
+  subscribeToRoom(code);
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  MASTER VIEW
+// ═══════════════════════════════════════════════════════════════
+function renderMaster() {
+  const s = gameState;
+  if (s.phase === 'lobby') return renderMasterLobby(s);
+  if (s.phase === 'event') return renderMasterEvent(s);
+  if (s.phase === 'playing') return renderMasterPlaying(s);
+  if (s.phase === 'resolution') return renderMasterResolution(s);
+  if (s.phase === 'endgame') return renderMasterEndgame(s);
+}
+
+function renderMasterLobby(s) {
+  const players = s.players || {};
+  const taken = Object.values(players).map(p => p.nation);
+  const count = Object.keys(players).length;
+
+  app.innerHTML = `<div class="container">
+    <div style="text-align:center;padding:20px 0">
+      <div style="font-size:11px;letter-spacing:6px;color:var(--text-faint);text-transform:uppercase">👁 Vue maître</div>
+      <h1 style="font-size:42px;color:var(--gold);margin:8px 0">POUDRIÈRE</h1>
+      <div class="code-display">${currentRoom}</div>
+      <p style="font-size:13px;color:var(--text-dim)">Les élèves entrent ce code pour rejoindre</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">📡 Joueurs connectés (${count})</div>
+      ${count === 0 ? '<p style="color:var(--text-dim);font-size:13px;text-align:center">En attente des joueurs...</p>' :
+        `<div style="display:flex;flex-wrap:wrap;gap:10px">
+          ${Object.entries(players).map(([id, p]) => {
+            const n = NATIONS[p.nation];
+            return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg-deep);padding:8px 12px;border-radius:4px;border:1px solid ${n?.accent || 'var(--border)'}">
+              <span style="font-size:20px">${n?.flag || '❓'}</span>
+              <span style="font-size:13px;color:var(--text)">${n?.short || 'Choix...'}</span>
+            </div>`;
+          }).join('')}
+        </div>`
+      }
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Nations disponibles (cliquez pour activer/désactiver)</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+        ${Object.entries(NATIONS).map(([k, n]) => {
+          const sel = (s.selectedNations || []).includes(k);
+          const isTaken = taken.includes(k);
+          return `<div class="nation-btn ${sel ? 'sel' : ''}" onclick="toggleNation('${k}')" style="${sel ? `border-color:${n.accent}` : ''}">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:22px">${n.flag}</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:${sel ? n.accent : 'var(--text-dim)'}">${n.short}</div>
+                <div style="font-size:10px;color:var(--text-dim)">${isTaken ? '✓ Pris' : n.leader}</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div style="text-align:center;margin:20px 0">
+      <button class="btn btn-gold" onclick="startGame()" ${count < 2 ? 'disabled' : ''} style="font-size:16px;padding:14px 48px">
+        ⚔ Lancer la simulation
+      </button>
+      ${count < 2 ? `<div style="font-size:11px;color:var(--orange);margin-top:8px">Minimum 2 joueurs</div>` : ''}
+    </div>
+  </div>`;
+}
+
+window.toggleNation = function(k) {
+  if (!gameState) return;
+  const sel = gameState.selectedNations || [];
+  const i = sel.indexOf(k);
+  if (i >= 0) sel.splice(i, 1);
+  else sel.push(k);
+  setInRoom('selectedNations', sel);
+};
+
+window.startGame = function() {
+  const s = gameState;
+  const players = s.players || {};
+  const activeNations = Object.values(players).map(p => p.nation).filter(n => n);
+
+  if (activeNations.length < 2) return;
+
+  const nationStates = {};
+  const alliances = {};
+  activeNations.forEach(k => {
+    const n = NATIONS[k];
+    nationStates[k] = { mil: n.mil, ind: n.ind, pop: n.pop, dip: n.dip };
+    alliances[k] = (n.startAllies || []).filter(a => activeNations.includes(a));
+  });
+
+  updateRoom({
+    phase: 'event',
+    activeNations: activeNations,
+    nationStates: nationStates,
+    alliances: alliances,
+    turn: 1,
+    tension: 10,
+    decisions: {},
+    telegrams: [],
+    eliminated: [],
+    history: []
+  });
+};
+
+function renderMasterEvent(s) {
+  const t = TURNS[s.turn - 1];
+  app.innerHTML = `<div class="container">
+    <div style="text-align:center;margin-bottom:8px">
+      <span style="font-size:10px;letter-spacing:4px;color:var(--text-faint);text-transform:uppercase">👁 Vue maître • ${currentRoom}</span>
+    </div>
+    ${hTension(s.tension)}
+    <div class="panel anim" style="text-align:center;border-color:var(--gold)33">
+      <div style="font-size:11px;letter-spacing:4px;color:var(--text-faint);text-transform:uppercase">Tour ${t.id} / 5</div>
+      <h2 style="font-size:32px;color:var(--gold);margin:8px 0">${t.year}</h2>
+      <div style="font-size:20px;color:var(--text);margin-bottom:16px">${t.title}</div>
+      <div style="font-size:14px;color:var(--text-dim);line-height:1.7;max-width:600px;margin:0 auto 20px">${t.desc}</div>
+      <div style="background:var(--bg-deep);border:1px solid var(--gold)44;border-radius:4px;padding:16px;max-width:560px;margin:0 auto">
+        <div style="font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">📰 Événement</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.6;font-style:italic">${t.event}</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn btn-gold" onclick="goPlaying()" style="font-size:15px;padding:14px 48px">Phase de décision →</button>
+    </div>
+  </div>`;
+}
+
+window.goPlaying = function() {
+  updateRoom({ phase: 'playing', decisions: {} });
+};
+
+function renderMasterPlaying(s) {
+  const t = TURNS[s.turn - 1];
+  const active = s.activeNations || [];
+  const elim = s.eliminated || [];
+  const playable = active.filter(n => !elim.includes(n));
+  const decisions = s.decisions || {};
+  const submitted = playable.filter(n => decisions[n]);
+  const allDone = submitted.length === playable.length;
+
+  app.innerHTML = `<div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div>
+        <span style="font-size:10px;letter-spacing:4px;color:var(--text-faint);text-transform:uppercase">👁 Tour ${t.id} • </span>
+        <span style="font-size:12px;color:var(--text-dim)">${t.year}</span>
+      </div>
+      <span style="font-size:12px;color:${allDone ? 'var(--green)' : 'var(--text-dim)'};font-weight:700">${submitted.length}/${playable.length} décisions</span>
+    </div>
+    ${hTension(s.tension)}
+    ${hAlliances(s.alliances)}
+
+    <div class="nat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:16px 0">
+      ${active.map(nId => {
+        const n = NATIONS[nId];
+        const st = s.nationStates[nId];
+        const isElim = elim.includes(nId);
+        const done = !!decisions[nId];
+        return `<div style="background:${n.color}20;border:2px solid ${isElim ? '#550020' : done ? 'var(--green)' : n.accent + '66'};border-radius:4px;padding:10px 12px;opacity:${isElim ? .35 : 1}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:20px">${n.flag}</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:${n.accent}">${n.short}</div>
+              <div style="font-size:9px;color:var(--text-dim)">${isElim ? '❌ Révolution' : done ? '✓ Décision' : '⏳ En attente'}</div>
+            </div>
+          </div>
+          ${!isElim ? `${hGauge(st.mil, 'var(--red)', '⚔', true)}${hGauge(st.ind, 'var(--gold)', '💰', true)}${hGauge(st.pop, 'var(--green)', '✊', true)}${hGauge(st.dip, 'var(--blue)', '🕊', true)}` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${allDone ? `<div style="text-align:center;margin:24px 0">
+      <button class="btn btn-red pulse" onclick="resolveTurn()" style="font-size:16px;padding:14px 48px">⚡ Résoudre le tour</button>
+    </div>` : `<div style="text-align:center;margin:24px 0;color:var(--text-dim);font-size:13px">En attente des décisions...</div>`}
+  </div>`;
+}
+
+window.resolveTurn = function() {
+  const s = gameState;
+  const turnData = TURNS[s.turn - 1];
+  const nationStates = { ...s.nationStates };
+  const alliances = { ...s.alliances };
+  const decisions = s.decisions || {};
+  const elim = [...(s.eliminated || [])];
+  let tensionDelta = 0;
+  const events = [];
+
+  (s.activeNations || []).filter(n => !elim.includes(n)).forEach(nId => {
+    const dec = decisions[nId];
+    if (!dec) return;
+    const st = { ...nationStates[nId] };
+
+    // Apply effects
+    if (dec.fx.mil) st.mil = clamp(st.mil + dec.fx.mil);
+    if (dec.fx.ind) st.ind = clamp(st.ind + dec.fx.ind);
+    if (dec.fx.pop) st.pop = clamp(st.pop + dec.fx.pop);
+    if (dec.fx.dip) st.dip = clamp(st.dip + dec.fx.dip);
+
+    // Turn shifts
+    const shift = turnData.shifts[nId];
+    if (shift) {
+      if (shift.mil) st.mil = clamp(st.mil + shift.mil);
+      if (shift.ind) st.ind = clamp(st.ind + shift.ind);
+      if (shift.pop) st.pop = clamp(st.pop + shift.pop);
+    }
+
+    // Industrial pressure
+    const indGap = Math.abs(st.ind - NATIONS[nId].pInd);
+    if (indGap > 25) {
+      const loss = Math.floor(indGap / 10);
+      st.pop = clamp(st.pop - loss);
+      events.push(`${NATIONS[nId].flag} ${NATIONS[nId].short}: pression industrielle (−${loss} stabilité)`);
+    }
+
+    // Betrayal
+    if (dec.tag === 'trahison') {
+      events.push(`💥 ${NATIONS[nId].flag} ${NATIONS[nId].short} TRAHIT ses alliés !`);
+      alliances[nId] = [];
+      Object.keys(alliances).forEach(k => {
+        alliances[k] = (alliances[k] || []).filter(a => a !== nId);
+      });
+    }
+
+    nationStates[nId] = st;
+    tensionDelta += dec.tension;
+  });
+
+  // Revolution check
+  (s.activeNations || []).forEach(nId => {
+    const st = nationStates[nId];
+    if (st && st.pop <= 15 && !elim.includes(nId)) {
+      elim.push(nId);
+      events.push(`🔴 RÉVOLUTION en ${NATIONS[nId].short} !`);
+    }
+  });
+
+  const newTension = clamp(s.tension + tensionDelta * 0.4 + (turnData.baseTension - s.tension) * 0.3);
+  const history = [...(s.history || []), { turn: s.turn, events, decisions: { ...decisions }, tension: newTension }];
+
+  updateRoom({
+    phase: 'resolution',
+    nationStates,
+    alliances,
+    eliminated: elim,
+    tension: newTension,
+    history
+  });
+};
+
+function renderMasterResolution(s) {
+  const t = TURNS[s.turn - 1];
+  const last = (s.history || [])[(s.history || []).length - 1];
+  const isEnd = s.turn >= 5 || s.tension >= 95;
+
+  app.innerHTML = `<div class="container">
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:11px;letter-spacing:4px;color:var(--text-faint);text-transform:uppercase">Résolution — Tour ${t.id}</div>
+      <h2 style="font-size:24px;color:var(--gold);margin:6px 0">${t.year}</h2>
+    </div>
+    ${hTension(s.tension)}
+    <div class="panel">
+      <div class="panel-header">Décisions</div>
+      ${(s.activeNations || []).map(nId => {
+        const dec = last?.decisions?.[nId];
+        const n = NATIONS[nId];
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #2a2520">
+          <span style="font-size:22px">${n.flag}</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:${n.accent}">${n.short}</div>
+            <div style="font-size:12px;color:var(--text-dim)">${dec?.text || '—'}</div>
+          </div>
+          ${dec ? `<span class="tag" style="color:${dec.tension > 0 ? '#ff6080' : '#60d0a0'}">${dec.tag}</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    ${last?.events?.length ? `<div class="panel" style="border-color:var(--red)33">
+      <div class="panel-header" style="color:var(--red)">⚡ Conséquences</div>
+      ${last.events.map(e => `<div style="font-size:13px;color:var(--text);margin-bottom:6px">${e}</div>`).join('')}
+    </div>` : ''}
+    <div style="text-align:center;margin:24px 0">
+      <button class="btn ${isEnd ? 'btn-red' : 'btn-gold'}" onclick="nextTurn()" style="font-size:15px;padding:14px 48px">
+        ${isEnd ? '⚡ Dénouement' : `Tour ${s.turn + 1} →`}
+      </button>
+    </div>
+  </div>`;
+}
+
+window.nextTurn = function() {
+  const s = gameState;
+  if (s.turn >= 5 || s.tension >= 95) {
+    updateRoom({ phase: 'endgame' });
+  } else {
+    updateRoom({ phase: 'event', turn: s.turn + 1, decisions: {} });
+  }
+};
+
+function renderMasterEndgame(s) {
+  const war = s.tension >= 70;
+  const scores = {};
+  (s.activeNations || []).forEach(nId => {
+    if ((s.eliminated || []).includes(nId)) { scores[nId] = 0; return; }
+    const st = s.nationStates[nId];
+    scores[nId] = Math.round(20 + (!war ? 30 : 0) + st.mil * .2 + st.ind * .3 + st.pop * .25 + st.dip * .25);
+  });
+  const ranked = [...(s.activeNations || [])].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+  const medals = ['🥇', '🥈', '🥉'];
+
+  app.innerHTML = `<div class="container">
+    <div style="text-align:center;padding:30px 0 20px">
+      <h1 style="font-size:38px;color:${war ? 'var(--red)' : 'var(--green)'};text-shadow:0 0 40px ${war ? 'rgba(230,57,70,.4)' : 'rgba(129,178,154,.4)'}">
+        ${war ? 'LA GRANDE GUERRE ÉCLATE' : 'LA PAIX EST PRÉSERVÉE'}
+      </h1>
+      <div style="font-size:14px;color:var(--text-dim);font-style:italic;max-width:500px;margin:10px auto">
+        ${war ? "L'engrenage des alliances a précipité l'Europe dans la catastrophe." : "Contre toute attente, la diplomatie l'a emporté."}
+      </div>
+    </div>
+    ${hTension(s.tension)}
+    <div class="panel" style="border-color:var(--gold)33">
+      <div style="font-size:13px;color:var(--gold);margin-bottom:10px">📚 Comparaison historique</div>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.7">
+        ${war ?
+          `Comme en 1914, la guerre a éclaté. L'engrenage des alliances fut impossible à arrêter. <strong style="color:var(--text)">Questions :</strong> La guerre était-elle inévitable ? Quelles décisions l'ont rendue plus probable ?`
+        : `Contrairement à 1914, vous avez maintenu la paix ! <strong style="color:var(--text)">Questions :</strong> Qu'avez-vous fait différemment des dirigeants de l'époque ?`}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">Classement final</div>
+      ${ranked.map((nId, i) => {
+        const n = NATIONS[nId];
+        const elim = (s.eliminated || []).includes(nId);
+        return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:${i < ranked.length - 1 ? '1px solid #2a2520' : 'none'};opacity:${elim ? .35 : 1}">
+          <div style="width:30px;text-align:center;font-size:${i < 3 ? '20px' : '14px'}">${i < 3 ? medals[i] : i + 1}</div>
+          <span style="font-size:24px">${n.flag}</span>
+          <div style="flex:1"><div style="font-size:14px;font-weight:700;color:${n.accent}">${n.short}</div></div>
+          <div style="font-size:24px;font-weight:700;color:${i === 0 ? 'var(--gold)' : 'var(--text-dim)'}">${scores[nId] || 0}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="text-align:center;margin:24px 0">
+      <button class="btn btn-gold" onclick="resetGame()">↺ Nouvelle partie</button>
+    </div>
+  </div>`;
+}
+
+window.resetGame = function() {
+  updateRoom({
+    phase: 'lobby',
+    players: {},
+    nationStates: {},
+    alliances: {},
+    decisions: {},
+    tension: 10,
+    turn: 0,
+    eliminated: [],
+    telegrams: [],
+    history: []
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  NATION VIEW
+// ═══════════════════════════════════════════════════════════════
+let myPlayerId = localStorage.getItem('poudriere_player_id') || ('p_' + Math.random().toString(36).substr(2, 9));
+localStorage.setItem('poudriere_player_id', myPlayerId);
+
+function renderNation() {
+  const s = gameState;
+  const players = s.players || {};
+  const me = players[myPlayerId];
+
+  if (s.phase === 'lobby') {
+    // Nation selection screen
+    const taken = Object.entries(players).filter(([id, p]) => id !== myPlayerId).map(([id, p]) => p.nation);
+    const selected = s.selectedNations || [];
+
+    app.innerHTML = `<div class="container" style="max-width:600px">
+      <div style="text-align:center;padding:20px 0">
+        <h1 style="font-size:36px;color:var(--gold)">POUDRIÈRE</h1>
+        <div class="code-display" style="font-size:20px">${currentRoom}</div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Choisissez votre nation</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+          ${Object.entries(NATIONS).filter(([k]) => selected.includes(k)).map(([k, n]) => {
+            const isTaken = taken.includes(k);
+            const isMine = me?.nation === k;
+            return `<div class="nation-btn ${isMine ? 'sel' : ''} ${isTaken && !isMine ? 'taken' : ''}" 
+                onclick="${isTaken && !isMine ? '' : `pickNation('${k}')`}" 
+                style="${isMine ? `border-color:${n.accent}` : ''}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:24px">${n.flag}</span>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:${isMine ? n.accent : isTaken ? 'var(--text-faint)' : 'var(--text)'}">${n.short}</div>
+                  <div style="font-size:10px;color:var(--text-dim)">${isTaken ? '✗ Pris' : isMine ? '✓ Votre choix' : n.leader}</div>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      ${me?.nation ? `<div style="text-align:center;color:var(--green);font-size:14px;margin:16px 0">
+        ✓ Vous jouez ${NATIONS[me.nation].flag} ${NATIONS[me.nation].name}<br>
+        <span style="font-size:12px;color:var(--text-dim)">En attente du lancement...</span>
+      </div>` : ''}
+    </div>`;
+    return;
+  }
+
+  // In-game
+  if (!me?.nation || !(s.activeNations || []).includes(me.nation)) {
+    app.innerHTML = `<div class="container" style="text-align:center;padding:60px">
+      <p style="color:var(--text-dim)">Vous n'êtes pas dans cette partie.</p>
+    </div>`;
+    return;
+  }
+
+  const nId = me.nation;
+  const n = NATIONS[nId];
+
+  if ((s.eliminated || []).includes(nId)) {
+    app.innerHTML = `<div class="container" style="text-align:center;padding:60px">
+      <span style="font-size:48px">${n.flag}</span>
+      <h2 style="color:var(--red);margin:12px 0">RÉVOLUTION !</h2>
+      <p style="color:var(--text-dim)">Votre gouvernement est tombé.</p>
+    </div>`;
+    return;
+  }
+
+  if (s.phase === 'event') renderNatEvent(s, nId);
+  else if (s.phase === 'playing') renderNatPlaying(s, nId);
+  else if (s.phase === 'resolution') renderNatResolution(s, nId);
+  else if (s.phase === 'endgame') renderNatEndgame(s, nId);
+}
+
+window.pickNation = function(nId) {
+  setInRoom(`players/${myPlayerId}`, { nation: nId, joinedAt: Date.now() });
+};
+
+function renderNatEvent(s, nId) {
+  const n = NATIONS[nId];
+  const t = TURNS[s.turn - 1];
+  app.innerHTML = `<div class="container">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:28px">${n.flag}</span>
+      <div><div style="font-size:16px;font-weight:700;color:${n.accent}">${n.name}</div></div>
+    </div>
+    ${hTension(s.tension)}
+    <div class="panel anim" style="text-align:center">
+      <div style="font-size:11px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase">Tour ${t.id} / 5</div>
+      <h2 style="font-size:24px;color:var(--gold);margin:6px 0">${t.year} — ${t.title}</h2>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin:12px 0">${t.desc}</div>
+      <div style="background:var(--bg-deep);border:1px solid var(--gold)44;border-radius:4px;padding:14px">
+        <div style="font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">📰 Événement</div>
+        <div style="font-size:13px;color:var(--text);font-style:italic">${t.event}</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:16px 0;color:var(--text-dim);font-size:13px">⏳ Préparez votre stratégie...</div>
+  </div>`;
+}
+
+function renderNatPlaying(s, nId) {
+  const n = NATIONS[nId];
+  const t = TURNS[s.turn - 1];
+  const st = s.nationStates[nId];
+  const allies = s.alliances[nId] || [];
+  const myDec = s.decisions?.[nId];
+  const telegrams = (s.telegrams || []).filter(tg => tg.from === nId || tg.to === nId || !tg.secret);
+
+  const indGap = Math.abs(st.ind - n.pInd);
+  const debtL = indGap > 30 ? 'CRITIQUE' : indGap > 15 ? 'Élevé' : 'Normal';
+  const debtC = indGap > 30 ? 'var(--red)' : indGap > 15 ? 'var(--orange)' : 'var(--green)';
+  const revL = st.pop < 20 ? 'IMMINENT' : st.pop < 35 ? 'Élevé' : st.pop < 50 ? 'Modéré' : 'Faible';
+  const revC = st.pop < 20 ? 'var(--red)' : st.pop < 35 ? 'var(--orange)' : 'var(--green)';
+
+  let tgHtml = '';
+  if (telegrams.length) {
+    tgHtml = `<div class="panel"><div class="panel-header">📨 Télégrammes</div><div style="max-height:180px;overflow-y:auto">
+      ${telegrams.map(tg => `<div class="telegram-msg" style="${tg.to === nId ? 'border-left:3px solid var(--gold)' : ''}">
+        <strong>${NATIONS[tg.from]?.flag} → ${NATIONS[tg.to]?.flag}</strong>
+        <span style="float:right;color:#8a7a60">${tg.secret ? '🔒' : '📢'}</span><br>
+        « ${tg.message} »
+      </div>`).join('')}
+    </div></div>`;
+  }
+
+  let decHtml = '';
+  if (!myDec) {
+    decHtml = `<div class="panel"><div class="panel-header">⚖ Votre décision</div>
+      <div class="dec-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${DECISIONS[s.turn].map(d => `<div class="dec-card" onclick="submitDecision('${nId}','${d.id}')">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">${d.text}</div><div>
+          ${d.fx.mil ? `<span class="tag" style="color:${d.fx.mil > 0 ? 'var(--red)' : 'var(--blue)'}">⚔${d.fx.mil > 0 ? '+' : ''}${d.fx.mil}</span>` : ''}
+          ${d.fx.ind ? `<span class="tag" style="color:${d.fx.ind > 0 ? 'var(--gold)' : 'var(--orange)'}">💰${d.fx.ind > 0 ? '+' : ''}${d.fx.ind}</span>` : ''}
+          ${d.fx.pop ? `<span class="tag" style="color:${d.fx.pop > 0 ? 'var(--green)' : 'var(--orange)'}">✊${d.fx.pop > 0 ? '+' : ''}${d.fx.pop}</span>` : ''}
+          ${d.fx.dip ? `<span class="tag" style="color:${d.fx.dip > 0 ? 'var(--blue)' : 'var(--orange)'}">🕊${d.fx.dip > 0 ? '+' : ''}${d.fx.dip}</span>` : ''}
+          <span class="tag" style="color:${d.tension > 0 ? '#ff6080' : '#60d0a0'}">T${d.tension > 0 ? '+' : ''}${d.tension}</span>
+        </div></div>`).join('')}</div></div>`;
+  } else {
+    decHtml = `<div class="panel" style="text-align:center;border-color:var(--green)44">
+      <div style="font-size:14px;color:var(--green)">✓ Décision enregistrée</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${myDec.text}</div>
+    </div>`;
+  }
+
+  app.innerHTML = `<div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:28px">${n.flag}</span>
+        <div><div style="font-size:16px;font-weight:700;color:${n.accent}">${n.name}</div>
+          <div style="font-size:10px;color:var(--text-dim)">Tour ${t.id}</div></div>
+      </div>
+      <button class="btn btn-ghost" onclick="openTg('${nId}')" style="font-family:'Special Elite',monospace;font-size:11px;padding:6px 12px">⚡ Télégramme</button>
+    </div>
+    ${hTension(s.tension)}
+    <div class="panel">
+      ${hGauge(st.mil, 'var(--red)', '⚔ Militaire')}
+      ${hGauge(st.ind, 'var(--gold)', '💰 Industrie')}
+      ${hGauge(st.pop, 'var(--green)', '✊ Stabilité')}
+      ${hGauge(st.dip, 'var(--blue)', '🕊 Diplomatie')}
+    </div>
+    ${allies.length ? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">Alliés : ${allies.map(a => `${NATIONS[a]?.flag} ${NATIONS[a]?.short}`).join(', ')}</div>` : ''}
+    <div class="panel">
+      <div class="panel-header">Pressions intérieures</div>
+      <div class="pr-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div><div style="font-size:10px;color:var(--gold)">💰 Industriels</div>
+          <div style="font-size:11px;font-weight:700;color:${debtC}">Dette: ${debtL}</div></div>
+        <div><div style="font-size:10px;color:var(--red)">⚔ État-major</div>
+          <div style="font-size:11px;color:${st.mil < n.pMil - 20 ? 'var(--red)' : 'var(--green)'}">${st.mil < n.pMil - 20 ? 'Mécontents' : 'OK'}</div></div>
+        <div><div style="font-size:10px;color:var(--green)">✊ Peuple</div>
+          <div style="font-size:11px;font-weight:700;color:${revC}">Révol: ${revL}</div></div>
+      </div>
+    </div>
+    ${tgHtml}
+    ${decHtml}
+
+    <div id="tgModal" class="overlay" style="display:none" onclick="this.style.display='none'">
+      <div class="telegram-paper" onclick="event.stopPropagation()">
+        <div style="text-align:center;border-bottom:2px solid #8a7a60;padding-bottom:10px;margin-bottom:14px">
+          <div style="font-size:10px;letter-spacing:4px;color:#8a7a60;text-transform:uppercase">⚡ Télégramme ⚡</div>
+        </div>
+        <select id="tgTo" style="width:100%;padding:8px;background:#ede8d8;border:1px solid #8a7a60;font-family:'Special Elite',monospace;font-size:13px;margin-bottom:8px">
+          <option value="">— Destinataire —</option>
+          ${(s.activeNations || []).filter(k => k !== nId && !(s.eliminated || []).includes(k)).map(k =>
+            `<option value="${k}">${NATIONS[k].flag} ${NATIONS[k].short}</option>`).join('')}
+        </select>
+        <textarea id="tgMsg" placeholder="Message..." maxlength="200" style="width:100%;height:80px;padding:10px;background:#ede8d8;border:1px solid #8a7a60;font-family:'Special Elite',monospace;font-size:12px;resize:none;box-sizing:border-box"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px">
+          <input type="checkbox" id="tgSec"> 🔒 Secret
+        </label>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button onclick="document.getElementById('tgModal').style.display='none'" style="flex:1;padding:8px;background:none;border:1px solid #8a7a60;font-family:'Special Elite',monospace;cursor:pointer">Annuler</button>
+          <button onclick="sendTg('${nId}')" style="flex:1;padding:8px;background:#2a2010;color:#f5f0e1;border:none;font-family:'Special Elite',monospace;font-weight:700;cursor:pointer">Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.openTg = function() {
+  document.getElementById('tgModal').style.display = 'flex';
+};
+
+window.sendTg = function(from) {
+  const to = document.getElementById('tgTo').value;
+  const msg = document.getElementById('tgMsg').value.trim();
+  const secret = document.getElementById('tgSec').checked;
+  if (!to || !msg) return;
+
+  const tgs = [...(gameState.telegrams || []), { from, to, message: msg, secret, ts: Date.now() }];
+  setInRoom('telegrams', tgs);
+  document.getElementById('tgModal').style.display = 'none';
+};
+
+window.submitDecision = function(nId, dId) {
+  const dec = DECISIONS[gameState.turn]?.find(d => d.id === dId);
+  if (!dec) return;
+  setInRoom(`decisions/${nId}`, dec);
+};
+
+function renderNatResolution(s, nId) {
+  const n = NATIONS[nId];
+  const st = s.nationStates[nId];
+  const last = (s.history || [])[(s.history || []).length - 1];
+  app.innerHTML = `<div class="container">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:28px">${n.flag}</span>
+      <div style="font-size:16px;font-weight:700;color:${n.accent}">${n.name}</div>
+    </div>
+    ${hTension(s.tension)}
+    <div class="panel"><div class="panel-header">État actuel</div>
+      ${hGauge(st.mil, 'var(--red)', '⚔')}${hGauge(st.ind, 'var(--gold)', '💰')}
+      ${hGauge(st.pop, 'var(--green)', '✊')}${hGauge(st.dip, 'var(--blue)', '🕊')}</div>
+    ${last?.events?.length ? `<div class="panel" style="border-color:var(--red)33"><div class="panel-header" style="color:var(--red)">⚡ Conséquences</div>
+      ${last.events.map(e => `<div style="font-size:13px;margin-bottom:4px">${e}</div>`).join('')}</div>` : ''}
+    <div style="text-align:center;color:var(--text-dim);font-size:13px;margin:16px 0">⏳ En attente...</div>
+  </div>`;
+}
+
+function renderNatEndgame(s, nId) {
+  const n = NATIONS[nId];
+  const st = s.nationStates[nId];
+  const war = s.tension >= 70;
+  const score = Math.round(20 + (!war ? 30 : 0) + st.mil * .2 + st.ind * .3 + st.pop * .25 + st.dip * .25);
+  app.innerHTML = `<div class="container" style="text-align:center;padding-top:40px">
+    <span style="font-size:48px">${n.flag}</span>
+    <h2 style="font-size:28px;color:${war ? 'var(--red)' : 'var(--green)'};margin:12px 0">
+      ${war ? 'GUERRE' : 'PAIX'}</h2>
+    <div style="font-size:48px;font-weight:700;color:var(--gold);margin:20px 0">${score} pts</div>
+    <div style="color:var(--text-dim);font-size:13px">Voir l'écran projeté pour le classement.</div>
+  </div>`;
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
