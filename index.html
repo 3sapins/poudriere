@@ -246,6 +246,7 @@ function renderGauge(val, color, label) {
 
 // === MAIN RENDER ===
 function render() {
+  console.log('render() - room:', room, 'role:', role, 'state:', state ? state.phase : 'null');
   if (!room) { renderLobby(); return; }
   if (!state) { app.innerHTML = '<div class="container" style="text-align:center;padding:60px"><p style="color:var(--dim)">Connexion...</p></div>'; return; }
   if (role === 'master') renderMaster();
@@ -657,13 +658,27 @@ function renderNation() {
   var players = s.players || {};
   var me = players[playerId];
 
+  // Debug
+  console.log('renderNation - phase:', s.phase, 'playerId:', playerId, 'me:', me, 'activeNations:', s.activeNations);
+
   if (s.phase === 'lobby') {
     renderNationLobby(me);
     return;
   }
 
-  if (!me || !me.nation || (s.activeNations || []).indexOf(me.nation) < 0) {
-    app.innerHTML = '<div class="container" style="text-align:center;padding:60px"><p style="color:var(--dim)">Vous n\'êtes pas dans cette partie.</p></div>';
+  // Si pas de joueur trouvé ou nation pas dans la partie, permettre de rejoindre
+  if (!me || !me.nation) {
+    app.innerHTML = '<div class="container" style="text-align:center;padding:60px">' +
+      '<p style="color:var(--dim)">Vous n\'avez pas choisi de nation.</p>' +
+      '<p style="color:var(--faint);font-size:12px;margin-top:8px">La partie a déjà commencé sans vous.</p>' +
+      '</div>';
+    return;
+  }
+
+  if ((s.activeNations || []).indexOf(me.nation) < 0) {
+    app.innerHTML = '<div class="container" style="text-align:center;padding:60px">' +
+      '<p style="color:var(--dim)">Votre nation (' + NATIONS[me.nation].flag + ' ' + NATIONS[me.nation].short + ') n\'est pas dans cette partie.</p>' +
+      '</div>';
     return;
   }
 
@@ -782,12 +797,20 @@ function renderNationEvent(nId) {
 }
 
 function renderNationPlaying(nId) {
+  console.log('renderNationPlaying called for', nId);
   var s = state;
   var n = NATIONS[nId];
   var t = TURNS[s.turn - 1];
   var st = s.nationStates[nId];
+  
+  if (!st) {
+    console.error('No nationStates for', nId, 'available states:', Object.keys(s.nationStates || {}));
+    app.innerHTML = '<div class="container" style="text-align:center;padding:60px"><p style="color:var(--red)">Erreur: données de nation introuvables</p></div>';
+    return;
+  }
+  
   var myDec = s.decisions ? s.decisions[nId] : null;
-  var alliances = s.alliances[nId] || [];
+  var alliances = s.alliances ? (s.alliances[nId] || []) : [];
   var tgs = (s.telegrams || []).filter(function(tg) {
     return tg.from === nId || tg.to === nId || !tg.secret;
   });
